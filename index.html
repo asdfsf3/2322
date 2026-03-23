@@ -357,6 +357,77 @@
       min-height: 72px;
     }
 
+    .days-together-bar {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 10001;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: bold;
+      color: white;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(10px);
+      box-shadow:
+        0 10px 25px rgba(141, 107, 255, 0.20),
+        0 0 18px rgba(255, 114, 200, 0.12);
+    }
+
+    .quote-box {
+      margin-top: 14px;
+      font-size: 18px;
+      color: #fff;
+      opacity: 0;
+      transform: translateY(10px) scale(0.95);
+      transition: 0.35s ease;
+      text-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+
+    .quote-box.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .quote-glow {
+      text-shadow:
+        0 0 6px #8d6bff,
+        0 0 12px #8d6bff,
+        0 0 20px #ff72c8,
+        0 0 30px #ff72c8;
+    }
+
+    .quote-particle {
+  position: fixed;
+  left: 50%;
+  top: 45%;
+  width: 12px;   /* كان 6px */
+  height: 12px;  /* كان 6px */
+  border-radius: 50%;
+  background: radial-gradient(circle, #ff72c8, #8d6bff);
+  box-shadow:
+    0 0 12px #ff72c8,
+    0 0 24px #8d6bff,
+    0 0 40px #ff72c8;
+  pointer-events: none;
+  z-index: 9999;
+  animation: particleMove 1.4s ease forwards;
+}
+    @keyframes particleMove {
+      0% {
+        transform: translate(-50%, 0) scale(0.5);
+        opacity: 0;
+      }
+      30% {
+        opacity: 1;
+      }
+      100% {
+        transform: translate(calc(-50% + var(--x)), calc(-200px + var(--y))) scale(1.8);
+        opacity: 0;
+      }
+    }
+
     .game-fab {
       position: fixed;
       top: 18px;
@@ -575,6 +646,15 @@
     }
 
     @media (max-width: 600px) {
+      .days-together-bar {
+        top: 58px;
+        right: 12px;
+        left: 12px;
+        text-align: center;
+        font-size: 14px;
+        padding: 10px 12px;
+      }
+
       .page {
         width: 96vw;
         min-height: 84vh;
@@ -623,9 +703,9 @@
   </style>
 </head>
 <body>
-
   <div class="stars" id="stars"></div>
   <div id="levelUpText" class="level-up">LEVEL UP 🔥</div>
+  <div id="daysTogetherBar" class="days-together-bar"></div>
 
   <button class="game-fab" onclick="goToPage(6, this, false)">🦆 لعبة البطّة</button>
 
@@ -636,9 +716,16 @@
       <div class="icon">💌</div>
       <h1>هذي المفاجأة إلج يا نونو</h1>
       <p class="typewriter" data-text="سويت هالموقع حتى أوصل لج شي حلو ومرتب من كلبي، هسه دوسي هذا الزر.↓"></p>
+
+      <div style="margin-top:20px;">
+        <button onclick="showQuote()">اضغطي هنا 💗</button>
+        <p id="quoteText" class="quote-box"></p>
+      </div>
+
       <div class="btns">
         <button onclick="goToPage(2, this, true)">افتحي التهنئة <span class="arrow">←</span></button>
       </div>
+
       <div class="dots">
         <span class="dot active"></span>
         <span class="dot"></span>
@@ -653,10 +740,12 @@
       <div class="icon">🌙</div>
       <h1>عيدج مبارك يا <span class="name">قزومه</span></h1>
       <p class="typewriter" data-text="كل عام وإنتِ بخير وفرح وسعادة، وإن شاء الله تبقين أجمل صدفة وأحلى بنيه بالدنيا كلها."></p>
+
       <div class="btns">
         <button class="secondary" onclick="goBack(1)">رجوع →</button>
         <button onclick="goToPage(3, this, true)">الرسالة اللي بعدها ←</button>
       </div>
+
       <div class="dots">
         <span class="dot"></span>
         <span class="dot active"></span>
@@ -673,10 +762,12 @@
       <div class="message-box">
         <p class="typewriter" data-text="نمنم أتمنى لج أيام كلها ضحكة وراحة، وإن شاء الله كل عيد وانتي أقرب لكلبي وأكثر وحدة تفرحيني، والقران يعني صدك الي يحچي وياج يرتاح، وإي بعد مادري شكتب، هيه المهم."></p>
       </div>
+
       <div class="btns">
         <button class="secondary" onclick="goBack(2)">رجوع →</button>
         <button onclick="goToPage(4, this, true)">شوفي الصور <span class="arrow">←</span></button>
       </div>
+
       <div class="dots">
         <span class="dot"></span>
         <span class="dot"></span>
@@ -726,7 +817,7 @@
         </audio>
 
         <div class="btns" style="margin-top:16px;">
-          <button class="secondary" onclick="goBack(4)">⬅️ رجوع</button>
+          <button class="secondary" onclick="goBack(4)">رجوع →</button>
           <button onclick="playSong()">تشغيل الأغنية</button>
           <button class="secondary" onclick="pauseSong()">إيقاف الأغنية</button>
         </div>
@@ -808,6 +899,80 @@
   </div>
 
   <script>
+    const quotes = [
+      "مو لأن الدنيا حلوة، بس لأنج بيها.",
+      "انتي مو صدفة، انتي الشي الوحيد الي تمنيت يطول.",
+      "مو اشتاق لج، اشتاق لنفسي وانا وياج.",
+      "كلشي يتعوض إلا احساسج.",
+      "انتي مو بس شخص، انتي راحة.",
+      "اكو ناس تنحب، وانتي تنعاش بيج.",
+      "مو مهم شكد الدنيا تتغير، المهم انتي تبقين.",
+      "انتي الراحة اللي تجي بدون موعد.",
+      "أنتِ البداية اللي ما أريد بعدها نهاية.",
+      "شمك بالهوى، بس ما أرتوي."
+    ];
+
+    function calculateDaysTogether() {
+      const startDate = new Date("2026-01-09T00:00:00");
+      const today = new Date();
+      const diffTime = today - startDate;
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+  function animateDaysTogetherBar() {
+  const el = document.getElementById("daysTogetherBar");
+  if (!el) return;
+
+  const target = calculateDaysTogether();
+  const duration = 1400;
+  const startTime = performance.now();
+
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.floor(target * eased);
+
+    el.textContent = `✨ ${current} يوم وانتِ وياي ✨`;
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      el.textContent = `✨ ${current} يوم وانتِ وياي ✨`;
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+    function showQuote() {
+      const random = Math.floor(Math.random() * quotes.length);
+      const el = document.getElementById("quoteText");
+      if (!el) return;
+
+      el.textContent = quotes[random];
+      el.classList.remove("show", "quote-glow");
+      void el.offsetWidth;
+      el.classList.add("show", "quote-glow");
+
+      for (let i = 0; i < 18; i++) {
+        const p = document.createElement("div");
+        p.className = "quote-particle";
+       const x = (Math.random() * 220 - 110) + "px";
+       const y = (Math.random() * 120 - 60) + "px";
+        p.style.setProperty("--x", x);
+        p.style.setProperty("--y", y);
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 1400);
+      }
+    }
+
+    function updateDaysSilent() {
+  const el = document.getElementById("daysTogetherBar");
+  if (!el) return;
+
+  const days = calculateDaysTogether();
+  el.textContent = `صارلنه ${days} يوم سوا ✨`;
+}
+
     function createConfetti() {
       const colors = ["#ff72c8", "#8d6bff", "#6ea8ff", "#ffffff", "#a98dff"];
       for (let i = 0; i < 70; i++) {
@@ -836,14 +1001,14 @@
       const currentPage = document.querySelector(".page.active");
       if (currentPage) currentPage.classList.remove("active");
 
-      if (pageNumber !== 6) {
-        stopDuckGame();
-      }
+      if (pageNumber !== 6) stopDuckGame();
 
       setTimeout(() => {
         const nextPage = document.getElementById("page" + pageNumber);
+        if (!nextPage) return;
         nextPage.classList.add("active");
         runTypewriters(nextPage);
+
         if (pageNumber === 6) {
           updateBestScore();
           updateLevelUI();
@@ -860,6 +1025,7 @@
 
       setTimeout(() => {
         const prevPage = document.getElementById("page" + pageNumber);
+        if (!prevPage) return;
         prevPage.classList.add("active");
         runTypewriters(prevPage);
       }, 220);
@@ -874,14 +1040,18 @@
     }
 
     const song = document.getElementById("song");
-    song.addEventListener("loadedmetadata", () => {
-      song.currentTime = 218;
-    });
+    if (song) {
+      song.addEventListener("loadedmetadata", () => {
+        song.currentTime = 218;
+      });
+    }
 
     function createStars() {
       const starsContainer = document.getElementById("stars");
-      const count = 65;
+      if (!starsContainer) return;
+      starsContainer.innerHTML = "";
 
+      const count = 65;
       for (let i = 0; i < count; i++) {
         const star = document.createElement("span");
         star.classList.add("star");
@@ -979,6 +1149,7 @@
 
     function showLevelUp() {
       const el = document.getElementById("levelUpText");
+      if (!el) return;
       el.textContent = `LEVEL ${level} 🔥`;
       el.classList.add("show");
       setTimeout(() => {
@@ -1021,11 +1192,8 @@
       if (!itemType) {
         const rand = Math.random();
         itemType = "bread";
-        if (rand < 0.12) {
-          itemType = "bomb";
-        } else if (rand < 0.24) {
-          itemType = "heart";
-        }
+        if (rand < 0.12) itemType = "bomb";
+        else if (rand < 0.24) itemType = "heart";
       }
 
       if (itemType === "bomb") symbol = "💣";
@@ -1131,9 +1299,7 @@
             updateLevelUI();
 
             const newLevel = getLevelInfo(score).level;
-            if (newLevel > oldLevel) {
-              showLevelUp();
-            }
+            if (newLevel > oldLevel) showLevelUp();
           } else if (item.type === "heart") {
             if (misses > 0) {
               misses--;
@@ -1212,7 +1378,6 @@
     document.addEventListener("keydown", (e) => {
       const gamePage = document.getElementById("page6");
       if (!gamePage.classList.contains("active")) return;
-
       if (e.key === "ArrowLeft") moveLeft = true;
       if (e.key === "ArrowRight") moveRight = true;
     });
@@ -1261,9 +1426,18 @@
     });
 
     createStars();
-    runTypewriters(document.getElementById("page1"));
-    updateBestScore();
-    updateLevelUI();
+runTypewriters(document.getElementById("page1"));
+updateBestScore();
+updateLevelUI();
+
+// أول مرة: أنيميشن
+animateDaysTogetherBar();
+
+// بعدها: تحديث بدون أنيميشن
+setInterval(() => {
+  animateDaysTogetherBar();
+}, 10000); // كل 10 ثواني
+
   </script>
 </body>
 </html>
