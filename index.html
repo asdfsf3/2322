@@ -6,7 +6,7 @@
   <title>تهنئة خاصة لنونو</title>
 
   <style>
-    * {
+* {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -845,6 +845,7 @@
         <span class="game-note-item"><strong>🥖 الخبزة:</strong> تزيد نقطة +1</span>
         <span class="game-note-item"><strong>❤️ القلب:</strong> ينقص الواكع 1</span>
         <span class="game-note-item"><strong>💣 القنبلة:</strong> إذا تاخذها تنتهي اللعبة فوراً</span>
+        <span class="game-note-item"><strong>  "جيب 60 نقطة حتى تفوز"  </span>
       </div>
 
       <div class="game-card">
@@ -852,6 +853,7 @@
           <div class="game-badge">النقاط: <span id="score">0</span></div>
           <div class="game-badge">الواكع: <span id="misses">0</span> / 3</div>
           <div class="game-badge">أفضل نتيجة: <span id="bestScore">0</span></div>
+          <div class="game-badge">عدد الفوزات: <span id="winsCount">0</span></div>
         </div>
 
         <div class="level-bar-wrap">
@@ -869,20 +871,25 @@
           <div class="duck-ground"></div>
 
           <div class="game-over-box" id="gameOverBox">
-            <h3>خسرت 🥲</h3>
-            <p>نتيجتك: <span id="finalScore">0</span></p>
+            <h3 id="gameResultTitle">خسرت 🥲</h3>
+            <p id="gameResultText">نتيجتك: <span id="finalScore">0</span></p>
             <button id="restartBtn" type="button">إعادة اللعب</button>
           </div>
         </div>
 
-        <div class="mobile-hint">
-          على التلفون: اسحب داخل اللعبة يمين ويسار. <br>
-          على الكمبيوتر: استخدم الأسهم يمين ويسار.
-        </div>
+        <div class="game-footer">
+          <div class="mobile-hint">
+            على التلفون: اسحب داخل اللعبة يمين ويسار. <br>
+            على الكمبيوتر: استخدم الأسهم يمين ويسار.
+          </div>
 
-        <div class="btns" style="margin-top:16px;">
-          <button id="startBtn" type="button">ابدأ اللعبة</button>
-          <button class="secondary" onclick="goBack(5)">رجوع</button>
+          <div class="game-actions">
+            <button id="startBtn" type="button">ابدأ اللعبة</button>
+            <button class="secondary" type="button" onclick="goBack(5)">رجوع</button>
+          </div>
+
+          <div class="game-close-bar">
+          </div>
         </div>
       </div>
 
@@ -1017,6 +1024,11 @@
       }, 220);
     }
 
+function closeDuckGame() {
+      stopDuckGame();
+      goToPage(5, null, false);
+    }
+
     function goBack(pageNumber) {
       const currentPage = document.querySelector(".page.active");
       if (currentPage) currentPage.classList.remove("active");
@@ -1100,6 +1112,9 @@
     const levelBarFillEl = document.getElementById("levelBarFill");
     const startBtn = document.getElementById("startBtn");
     const restartBtn = document.getElementById("restartBtn");
+    const winsCountEl = document.getElementById("winsCount");
+    const gameResultTitle = document.getElementById("gameResultTitle");
+    const gameResultText = document.getElementById("gameResultText");
 
     let duckGameLoop = null;
     let spawnLoop = null;
@@ -1170,6 +1185,22 @@
       updateBestScore();
     }
 
+    function getWins() {
+      return Number(localStorage.getItem("duckWins") || 0);
+    }
+
+    function addWin() {
+      const wins = getWins() + 1;
+      localStorage.setItem("duckWins", wins);
+      updateWinsCount();
+    }
+
+    function updateWinsCount() {
+      if (winsCountEl) {
+        winsCountEl.textContent = getWins();
+      }
+    }
+
     function resetDuckPosition() {
       const gameWidth = duckGame.clientWidth || 320;
       duckX = gameWidth / 2;
@@ -1192,8 +1223,11 @@
       if (!itemType) {
         const rand = Math.random();
         itemType = "bread";
-        if (rand < 0.12) itemType = "bomb";
-        else if (rand < 0.24) itemType = "heart";
+        if (rand < 0.12) {
+          itemType = "bomb";
+        } else if (rand < 0.24) {
+          itemType = "heart";
+        }
       }
 
       if (itemType === "bomb") symbol = "💣";
@@ -1254,6 +1288,60 @@
       }
     }
 
+    function winDuckGame() {
+      gameRunning = false;
+      if (duckGameLoop) cancelAnimationFrame(duckGameLoop);
+      if (spawnLoop) clearInterval(spawnLoop);
+      duckGameLoop = null;
+      spawnLoop = null;
+
+      startBtn.style.display = "block";
+      finalScoreEl.textContent = score;
+      saveBestScore();
+      addWin();
+
+      gameResultTitle.textContent = "فزت 🎉";
+      gameResultText.innerHTML = `جبت <span id="finalScore">${score}</span> نقطة ووصلت للهدف!`;
+      gameOverBox.classList.add("show");
+    }
+
+    function endDuckGame(reason = "lose") {
+      gameRunning = false;
+      if (duckGameLoop) cancelAnimationFrame(duckGameLoop);
+      if (spawnLoop) clearInterval(spawnLoop);
+      duckGameLoop = null;
+      spawnLoop = null;
+
+      startBtn.style.display = "block";
+      finalScoreEl.textContent = score;
+      saveBestScore();
+
+      if (reason === "bomb") {
+        gameResultTitle.textContent = "انفجرت 💣";
+        gameResultText.innerHTML = `. نتيجتك: <span id="finalScore">${score}</span>`;
+      } else {
+        gameResultTitle.textContent = "خسرت 🥲";
+        gameResultText.innerHTML = `نتيجتك: <span id="finalScore">${score}</span>`;
+      }
+
+      gameOverBox.classList.add("show");
+    }
+
+    function stopDuckGame(hideGameOver = true) {
+      gameRunning = false;
+      if (duckGameLoop) cancelAnimationFrame(duckGameLoop);
+      if (spawnLoop) clearInterval(spawnLoop);
+      duckGameLoop = null;
+      spawnLoop = null;
+      clearFallingItems();
+
+      startBtn.style.display = "block";
+
+      if (hideGameOver) {
+        gameOverBox.classList.remove("show");
+      }
+    }
+
     function updateGame() {
       if (!gameRunning) return;
 
@@ -1299,14 +1387,21 @@
             updateLevelUI();
 
             const newLevel = getLevelInfo(score).level;
-            if (newLevel > oldLevel) showLevelUp();
+            if (newLevel > oldLevel) {
+              showLevelUp();
+            }
+
+            if (score >= 60) {
+              winDuckGame();
+              return;
+            }
           } else if (item.type === "heart") {
             if (misses > 0) {
               misses--;
               missesEl.textContent = misses;
             }
           } else if (item.type === "bomb") {
-            endDuckGame();
+            endDuckGame("bomb");
             return;
           }
 
@@ -1339,40 +1434,22 @@
       difficulty = 1;
       level = 1;
       gameRunning = true;
+
       scoreEl.textContent = "0";
       missesEl.textContent = "0";
       finalScoreEl.textContent = "0";
+
       gameOverBox.classList.remove("show");
+      startBtn.style.display = "none";
+
       clearFallingItems();
       resetDuckPosition();
       updateBestScore();
+      updateWinsCount();
       updateLevelUI();
 
       spawnLoop = setInterval(spawnItem, 850);
       duckGameLoop = requestAnimationFrame(updateGame);
-    }
-
-    function endDuckGame() {
-      gameRunning = false;
-      if (duckGameLoop) cancelAnimationFrame(duckGameLoop);
-      if (spawnLoop) clearInterval(spawnLoop);
-      duckGameLoop = null;
-      spawnLoop = null;
-      finalScoreEl.textContent = score;
-      saveBestScore();
-      gameOverBox.classList.add("show");
-    }
-
-    function stopDuckGame(hideGameOver = true) {
-      gameRunning = false;
-      if (duckGameLoop) cancelAnimationFrame(duckGameLoop);
-      if (spawnLoop) clearInterval(spawnLoop);
-      duckGameLoop = null;
-      spawnLoop = null;
-      clearFallingItems();
-      if (hideGameOver) {
-        gameOverBox.classList.remove("show");
-      }
     }
 
     document.addEventListener("keydown", (e) => {
@@ -1416,8 +1493,10 @@
       duck.style.left = duckX + "px";
     }
 
-    startBtn.addEventListener("click", startDuckGame);
-    restartBtn.addEventListener("click", startDuckGame);
+    document.addEventListener("DOMContentLoaded", () => {
+      if (startBtn) startBtn.addEventListener("click", startDuckGame);
+      if (restartBtn) restartBtn.addEventListener("click", startDuckGame);
+    });
 
     window.addEventListener("resize", () => {
       if (document.getElementById("page6").classList.contains("active")) {
@@ -1425,18 +1504,54 @@
       }
     });
 
+    updateWinsCount();
     createStars();
-runTypewriters(document.getElementById("page1"));
-updateBestScore();
-updateLevelUI();
+    runTypewriters(document.getElementById("page1"));
+    updateBestScore();
+    updateLevelUI();
 
-// أول مرة: أنيميشن
-animateDaysTogetherBar();
+    // أول مرة: أنيميشن
+    animateDaysTogetherBar();
 
-// بعدها: تحديث بدون أنيميشن
-setInterval(() => {
-  animateDaysTogetherBar();
-}, 10000); // كل 10 ثواني
+    // بعدها: تحديث بدون أنيميشن
+    setInterval(() => {
+      animateDaysTogetherBar();
+    }, 10000); // كل 10 ثواني
+
+
+  //-----------------------------------------------------------------------------------------------------------------------//
+  
+  function sendVisitAnalytics() {
+    const noticeKey = "visit_sent_" + location.pathname;
+    const alreadySent = sessionStorage.getItem(noticeKey);
+
+    if (alreadySent) return;
+
+    const payload = {
+      page: location.pathname + location.search + location.hash,
+      time: new Date().toLocaleString("en-GB", {
+        hour12: false
+      })
+    };
+
+    fetch("/api/visit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Visit sent:", data);
+        sessionStorage.setItem(noticeKey, "1");
+      })
+      .catch((err) => console.error("Visit tracking failed:", err));
+  }
+
+  // ينفذ بعد ما الصفحة تفتح
+  window.addEventListener("load", sendVisitAnalytics);
+  
 
   </script>
 </body>
